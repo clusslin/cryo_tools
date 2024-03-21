@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intervetional Needle Tools</title>
+<style>
+   .card {
+       display: flex;
+       border: 1px solid #000;
+       margin-bottom: 20px;
+       background-color: #fdefc1; /* 添加淺灰色底色 */
+       border-radius: 10px; /* 添加圓角 */
+       width: 80%; /* 設定寬度為80% */
+       margin-left: auto; /* 水平居中 */
+       margin-right: auto; /* 水平居中 */
+       box-shadow: 0 2px 5px rgba(0,0,0,1); /* 添加陰影效果 */
+     }
+  .card .angle-part {
+    flex: 2;
+    padding: 10px;
+    position: relative;
+  }
+  .card .depth-part {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .slider {
+    width: 100%;
+  }
+  .vertical-slider {
+    writing-mode: bt-lr;
+    -webkit-appearance: slider-vertical;
+    width: 15px;
+    height: 200px;
+    padding: 0 20px;
+  }
+  .needle-svg {
+    width: 100%;
+    height: 150px;
+  }
+  .angle-label {
+    position: absolute;
+    font-size: 16px;
+  }
+  .angle-label.left {
+    left: 16px;
+    top: 50%;
+  }
+  .angle-label.right {
+    right: 16px;
+    top: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div id="cards-container">
+  <!-- Cards will be added dynamically here -->
+</div>
+
+<button id="add-card">Add Needle Card</button>
+
+<script>
+  let needleCount = 1;
+
+  function createCard() {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="angle-part">
+        <h3>Needle ${needleCount}</h3>
+        <svg class="needle-svg" viewBox="0 0 200 150">
+          <line id="needle-line-${needleCount}" x1="100" y1="150" x2="100" y2="0" stroke="red" stroke-width="2"/>
+        </svg>
+        <input type="range" class="slider angle-slider" min="-90" max="90" value="0" step="0.1">
+        <div class="angle-label left">Left: 90.0°</div>
+        <div class="angle-label right">Right: 90.0°</div>
+      </div>
+      <div class="depth-part">
+        <span class="depth-label">Depth: <span class="depth">150</span>mm</span>
+        <input type="range" class="slider vertical-slider depth-slider" min="0" max="150" value="150" step="1" orient="vertical">
+      </div>
+    `;
+
+    const container = document.getElementById('cards-container');
+    container.appendChild(card);
+    container.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+
+    const angleSlider = card.querySelector('.angle-slider');
+    const leftLabel = card.querySelector('.angle-label.left');
+    const rightLabel = card.querySelector('.angle-label.right');
+    const depthSlider = card.querySelector('.depth-slider');
+    const depthLabel = card.querySelector('.depth-label .depth');
+    const needleLine = card.querySelector(`#needle-line-${needleCount}`);
+
+//    angleSlider.addEventListener('input', function() {
+//      const angleValue = parseFloat(this.value);
+//      const leftAngle = angleValue < 0 ? -angleValue : 0;
+//     const rightAngle = angleValue > 0 ? angleValue : 0;
+//
+//      leftLabel.textContent = `Left: ${leftAngle.toFixed(1)}°`;
+//      rightLabel.textContent = `Right: ${rightAngle.toFixed(1)}°`;
+//      needleLine.setAttribute('transform', `rotate(${angleValue}, 100, 150)`);
+//    });
+    function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+        var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+    
+        return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+        };
+    }
+    
+    function describeArc(x, y, radius, startAngle, endAngle){
+        var start = polarToCartesian(x, y, radius, endAngle);
+        var end = polarToCartesian(x, y, radius, startAngle);
+    
+        var arcSweep = endAngle - startAngle <= 180 ? "0" : "1";
+    
+        var d = [
+            "M", start.x, start.y, 
+            "A", radius, radius, 0, arcSweep, 0, end.x, end.y
+        ].join(" ");
+    
+        return d;       
+    }
+    angleSlider.addEventListener('input', function() {
+        const angleValue = parseFloat(this.value);
+        const horizontalAngle = 90 - Math.abs(angleValue);
+        
+        leftLabel.textContent = `Left: ${angleValue < 0 ? horizontalAngle.toFixed(1) : '0.0'}°`;
+        rightLabel.textContent = `Right: ${angleValue > 0 ? horizontalAngle.toFixed(1) : '0.0'}°`;
+      
+        needleLine.setAttribute('transform', `rotate(${angleValue}, 100, 150)`);
+      
+      });
+
+    depthSlider.addEventListener('input', function() {
+        depthLabel.textContent = this.value;
+    });
+
+    needleCount++;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('add-card').addEventListener('click', createCard);
+
+  // Initialize the first card
+    createCard();
+  });
+</script>
+
+</body>
+</html>
